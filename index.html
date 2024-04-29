@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<!-- 
+  Author: Anthon van Dijk
+  Purpose: This application facilitates the easy tracking of relevant counters while playing Terraforming Mars WITH TWO PLAYERS. 
+  The resource cubes included with the game often shift and cause confusion, and this application aims to prevent that by providing a stable tracking method.
+-->
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Terraforming Mars Tracker</title>
+		<link rel="stylesheet" type="text/css" href="styles.css">
+		<link rel="icon" type="image/x-icon" href="images/favicon.ico">
+		<script>
+			function load() {
+				alert('Are you sure?');
+				for (let i = 0; i < localStorage.length; i++) {
+			    const key = localStorage.key(i);
+			    const value = localStorage.getItem(key);
+			    const element = document.getElementById(key);
+			    element.innerText = value;
+			  }				
+			}
+
+			function backup() {
+				for (let i = 0; i < 26; i++) {
+					localStorage.setItem(String(i + 1), document.getElementById(String(i + 1)).innerText);
+				}
+			}
+
+			function productionPhase() {
+				for (let j = 0; j < 2; j++) {
+					const mcElement = document.getElementById(String(8 + j * 13));
+					const tr = parseInt(document.getElementById(String(1 + j * 13)).innerText, 10);
+					const mcProduction = parseInt(document.getElementById(String(2 + j * 13)).innerText, 10);
+					const currentmc = parseInt(mcElement.innerText, 10);
+					mcElement.innerText = currentmc + tr + mcProduction;
+					const energyElement = document.getElementById(String(12 + j * 13));
+					const heatElement = document.getElementById(String(13 + j * 13));
+					const currentEnergy = parseInt(energyElement.innerText, 10);
+					const currentHeat = parseInt(heatElement.innerText, 10);
+					energyElement.innerText = 0;
+					heatElement.innerText = currentHeat + currentEnergy;
+					for (let i = 0; i < 5; i++) {
+					  const element = document.getElementById(String(9 + i + j * 13));
+					  const currentValue = parseInt(element.innerText, 10);
+					  element.innerText = currentValue + parseInt(document.getElementById(String(3 + i + j * 13)).innerText, 10);
+					}
+				}
+				backup();
+			}
+
+			function isPositiveIntegerWithoutLeadingZeros(value) {
+    		return /^[1-9]\d*$/.test(value);
+			}
+
+			function increase(celId) {
+		    const td = document.getElementById(celId);
+		    td.innerText = parseInt(td.innerText, 10) + 1;
+			}
+
+			function decrease(celId, boundary) {
+		    const td = document.getElementById(celId);
+		    const newValue = parseInt(td.innerText, 10) - 1;
+		    if (newValue >= boundary) {
+		    	td.innerText = newValue;
+				}
+			}
+
+			function greeneryAction(playerNr) {
+				const plantsElement = document.getElementById(String(11 + (playerNr - 1) * 13));
+				const newPlantsValue = parseInt(plantsElement.innerText, 10) - 8;
+				if (newPlantsValue < 0) {
+					alert('Insufficient number of plants.');
+				} else {
+					plantsElement.innerText = newPlantsValue;
+				}
+				backup();
+			}
+
+			function temperatureAction(playerNr) {
+				const heatElement = document.getElementById(String(13 + (playerNr - 1) * 13));
+				const newHeatValue = parseInt(heatElement.innerText, 10) - 8;
+				if (newHeatValue < 0) {
+					alert('Insufficient units of heat.');
+				} else {
+					heatElement.innerText = newHeatValue;
+				}
+				backup();
+			}
+
+			function paywithmc(playerNr) {
+				const mcElement = document.getElementById(String(8 + (playerNr - 1) * 13));
+				const costElement = document.getElementById(`costplayer${playerNr}`);
+				const costString = costElement.value;
+				costElement.value = '';
+				if (isPositiveIntegerWithoutLeadingZeros(costString)) {
+					const newMegaCreditValue = parseInt(mcElement.innerText, 10) - parseInt(costString);
+					if (newMegaCreditValue < 0) {
+						alert('Insufficient funds.');
+					} else {
+						mcElement.innerText = newMegaCreditValue;
+					}
+				} else {
+					alert('Enter a positive integer without leading zeros.');
+				}
+				backup();
+			}
+
+			function payWithSteel(playerNr) {
+				const mcElementIdNr = 8 + (playerNr - 1) * 13;
+				const mcElement = document.getElementById(String(mcElementIdNr));
+				const steelElement = document.getElementById(String(mcElementIdNr + 1));
+				const costElement = document.getElementById(`costplayer${playerNr}`);
+				const costString = costElement.value;
+				costElement.value = '';
+				if (isPositiveIntegerWithoutLeadingZeros(costString)) {
+					const mc = parseInt(mcElement.innerText, 10);
+					const steel = parseInt(steelElement.innerText, 10);
+					let remaningCost = parseInt(costString);
+					let mcCost = 0;
+					let steelCost = 0;
+					const idealSteelCost = Math.floor(remaningCost / 2);
+					if (mc + 2 * steel >= remaningCost) { // sufficient funds for the card?
+						if (steel < idealSteelCost) {
+							steelCost = steel;
+							remaningCost = remaningCost - 2 * steelCost;
+						} else {
+							steelCost = idealSteelCost;
+							remaningCost = remaningCost - 2 * steelCost;
+							if (mc === 0 && remaningCost === 1) {
+								steelCost = steelCost + 1;
+								remaningCost = 0;
+							}
+						}
+						mcCost = remaningCost;
+						mcElement.innerText = mc - mcCost;
+						steelElement.innerText = steel - steelCost;
+					} else {
+						alert('Insufficient funds.');
+					}
+				} else {
+					alert('Enter a positive integer without leading zeros.');
+				}
+				backup();
+			}
+
+			function payWithTitanium(playerNr) {
+				const mcElementIdNr = 8 + (playerNr - 1) * 13;
+				const mcElement = document.getElementById(String(mcElementIdNr));
+				const titaniumElement = document.getElementById(String(mcElementIdNr + 2));
+				const costElement = document.getElementById(`costplayer${playerNr}`);
+				const costString = costElement.value;
+				costElement.value = '';
+				if (isPositiveIntegerWithoutLeadingZeros(costString)) {
+					const mc = parseInt(mcElement.innerText, 10);
+					const titanium = parseInt(titaniumElement.innerText, 10);
+					let remaningCost = parseInt(costString);
+					let mcCost = 0;
+					let titaniumCost = 0;
+					const idealTitaniumCost = Math.floor(remaningCost / 3);
+					if (mc + 3 * titanium >= remaningCost) { // sufficient funds for the card?
+						if (titanium < idealTitaniumCost) {
+							titaniumCost = titanium;
+							remaningCost = remaningCost - 3 * titaniumCost;
+						} else {
+							titaniumCost = idealTitaniumCost;
+							remaningCost = remaningCost - 3 * titaniumCost;
+							if ((mc === 0 && remaningCost === 1) || (mc === 1 && remaningCost === 2)) {
+								titaniumCost = titaniumCost + 1;
+								remaningCost = 0;
+							}
+						}
+						mcCost = remaningCost;
+						mcElement.innerText = mc - mcCost;
+						titaniumElement.innerText = titanium - titaniumCost;
+					} else {
+						alert('Insufficient funds.');
+					}
+				} else {
+					alert('Enter a positive integer without leading zeros.');
+				}
+				backup();
+			}    
+		</script>
+	</head>
+	<body>
+		<header>
+			<h5>Terraforming Mars Tracker (TWO PLAYERS)</h5>
+		</header>
+		<main>
+			<button onclick="productionPhase()">Production Phase</button>
+			<button onclick="backup()">Backup</button>
+			<button onclick="load()">Load</button>
+			<table>
+				<caption>Player 1</caption>
+				<tr>
+					<th>Symbol</th>
+					<td><img class="horizontal" src="images/tr.png" alt="TR"></td>
+					<td class="production"><img class="square" src="images/mc.png" alt="M&euro;"></td>
+					<td class="production"><img class="square" src="images/steel.png" alt="Steel"></td>
+					<td class="production"><img class="square" src="images/titanium.png" alt="Titanium"></td>
+					<td class="production"><img class="square" src="images/plants.png" alt="Plants"></td>
+					<td class="production"><img class="square" src="images/energy.png" alt="Energy"></td>
+					<td class="production"><img class="square" src="images/heat.png" alt="Heat"></td>
+					<td><img class="square" src="images/mc.png" alt="M&euro;"></td>
+					<td><img class="square" src="images/steel.png" alt="Steel"></td>
+					<td><img class="square" src="images/titanium.png" alt="Titanium"></td>
+					<td><img class="square" src="images/plants.png" alt="Plants"></td>
+					<td><img class="square" src="images/energy.png" alt="Energy"></td>
+					<td><img class="square" src="images/heat.png" alt="Heat"></td>
+				</tr>
+				<tr>
+					<th>Name</th>
+					<td><abbr title="terraform rating">TR</abbr></td>
+					<td><abbr title="MegaCredits">M&euro;</abbr><br>production</td>
+					<td>Steel<br>production</td>
+					<td>Titanium<br>production</td>
+					<td>Plants<br>production</td>
+					<td>Energy<br>production</td>
+					<td>Heat<br>production</td>
+					<td><abbr title="MegaCredits">M&euro;</abbr></td>
+					<td>Steel</td>
+					<td>Titanium</td>
+					<td>Plants</td>
+					<td>Energy</td>
+					<td>Heat</td>
+				</tr>
+				<tr>
+					<th>Plus</th>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('1')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('2')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('3')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('4')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('5')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('6')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('7')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('8')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('9')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('10')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('11')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('12')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('13')"></td>
+				</tr>
+				<tr>
+					<th>Counter</th>
+					<td id="1">20</td>
+					<td id="2">1</td>
+					<td id="3">1</td>
+					<td id="4">1</td>
+					<td id="5">1</td>
+					<td id="6">1</td>
+					<td id="7">1</td>
+					<td id="8">0</td>
+					<td id="9">0</td>
+					<td id="10">0</td>
+					<td id="11">0</td>
+					<td id="12">0</td>
+					<td id="13">0</td>
+				</tr>
+				<tr>
+					<th>Minus</th>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('1', 1)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('2', -5)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('3', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('4', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('5', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('6', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('7', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('8', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('9', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('10', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('11', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('12', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('13', 0)"></td>
+				</tr>
+			</table>
+			<form>
+				<label for="costplayer1">Cost of a played card:</label><br>
+				<input type="text" id="costplayer1" name="costplayer1">
+			</form>
+			<button onclick="paywithmc(1)">Pay with M&euro; only</button>
+			<button onclick="payWithSteel(1)">Pay with max Steel</button>
+			<button onclick="payWithTitanium(1)">Pay with max Titanium</button><br>
+			<button onclick="greeneryAction(1)">8 <img src="images/plants.png" height="25px"> <img src="images/arrow.png" height="25px"> <img src="images/greenery.png" height="25px"></button>
+			<button onclick="temperatureAction(1)">8 <img src="images/heat.png" height="25px"> <img src="images/arrow.png" height="25px"> <img src="images/temperature.png" height="25px"></button>
+			<table>
+				<caption>Player 2</caption>
+				<tr>
+					<th>Symbol</th>
+					<td><img class="horizontal" src="images/tr.png" alt="TR"></td>
+					<td class="production"><img class="square" src="images/mc.png" alt="M&euro;"></td>
+					<td class="production"><img class="square" src="images/steel.png" alt="Steel"></td>
+					<td class="production"><img class="square" src="images/titanium.png" alt="Titanium"></td>
+					<td class="production"><img class="square" src="images/plants.png" alt="Plants"></td>
+					<td class="production"><img class="square" src="images/energy.png" alt="Energy"></td>
+					<td class="production"><img class="square" src="images/heat.png" alt="Heat"></td>
+					<td><img class="square" src="images/mc.png" alt="M&euro;"></td>
+					<td><img class="square" src="images/steel.png" alt="Steel"></td>
+					<td><img class="square" src="images/titanium.png" alt="Titanium"></td>
+					<td><img class="square" src="images/plants.png" alt="Plants"></td>
+					<td><img class="square" src="images/energy.png" alt="Energy"></td>
+					<td><img class="square" src="images/heat.png" alt="Heat"></td>
+				</tr>
+				<tr>
+					<th>Name</th>
+					<td><abbr title="terraform rating">TR</abbr></td>
+					<td><abbr title="MegaCredits">M&euro;</abbr><br>production</td>
+					<td>Steel<br>production</td>
+					<td>Titanium<br>production</td>
+					<td>Plants<br>production</td>
+					<td>Energy<br>production</td>
+					<td>Heat<br>production</td>
+					<td><abbr title="MegaCredits">M&euro;</abbr></td>
+					<td>Steel</td>
+					<td>Titanium</td>
+					<td>Plants</td>
+					<td>Energy</td>
+					<td>Heat</td>
+				</tr>
+				<tr>
+					<th>Plus</th>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('14')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('15')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('16')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('17')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('18')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('19')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('20')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('21')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('22')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('23')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('24')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('25')"></td>
+					<td><img src="images/plus.svg" alt="+" onclick="increase('26')"></td>
+				</tr>
+				<tr>
+					<th>Counter</th>
+					<td id="14">20</td>
+					<td id="15">1</td>
+					<td id="16">1</td>
+					<td id="17">1</td>
+					<td id="18">1</td>
+					<td id="19">1</td>
+					<td id="20">1</td>
+					<td id="21">0</td>
+					<td id="22">0</td>
+					<td id="23">0</td>
+					<td id="24">0</td>
+					<td id="25">0</td>
+					<td id="26">0</td>
+				</tr>
+				<tr>
+					<th>Minus</th>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('14', 1)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('15', -5)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('16', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('17', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('18', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('19', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('20', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('21', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('22', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('23', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('24', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('25', 0)"></td>
+					<td><img src="images/minus.svg" alt="-" onclick="decrease('26', 0)"></td>
+				</tr>
+			</table>
+			<form>
+				<label for="costplayer2">Cost of a played card:</label><br>
+				<input type="text" id="costplayer2" name="costplayer2">
+			</form>
+			<button onclick="paywithmc(2)">Pay with M&euro; only</button>
+			<button onclick="payWithSteel(2)">Pay with max Steel</button>
+			<button onclick="payWithTitanium(2)">Pay with max Titanium</button><br>
+			<button onclick="greeneryAction(2)">8 <img src="images/plants.png" height="25px"> <img src="images/arrow.png" height="25px"> <img src="images/greenery.png" height="25px"></button>
+			<button onclick="temperatureAction(2)">8 <img src="images/heat.png" height="25px"> <img src="images/arrow.png" height="25px"> <img src="images/temperature.png" height="25px"></button>
+		</main>
+	</body>
+</html>
